@@ -23,11 +23,15 @@ contract Game with Deployable, Ownable {
     player1: Player;
     player2: Player;
     game_bet: Int as coins;
+    royalty_percent: Int;
+    royalty_destination: Address;
 
-    init(owner: Address, player1: Address, player2: Address, balance1: Address, balance2: Address, game_bet: Int, id: String) {
+    init(owner: Address, player1: Address, player2: Address, balance1: Address, balance2: Address, game_bet: Int, id: String, royalty_percent: Int, royalty_destination: Address) {
         self.id = id;
         self.owner = owner;
         self.game_bet = game_bet;
+        self.royalty_percent = royalty_percent;
+        self.royalty_destination = royalty_destination;
         self.player1 = Player{
             address: player1,
             balance: balance1,
@@ -61,7 +65,9 @@ contract Game with Deployable, Ownable {
                     player2: self.player2.address,
                     balance2: self.player2.balance,
                     amount: self.game_bet,
-                    id: self.id
+                    id: self.id,
+                    royalty_percent: self.royalty_percent,
+                    royalty_destination: self.royalty_destination
                 }.toCell()
             });
         } else if (self.player2.address == msg.winner) {
@@ -77,7 +83,9 @@ contract Game with Deployable, Ownable {
                     player2: self.player2.address,
                     balance2: self.player2.balance,
                     amount: self.game_bet,
-                    id: self.id
+                    id: self.id,
+                    royalty_percent: self.royalty_percent,
+                    royalty_destination: self.royalty_destination
                 }.toCell()
             });
         }

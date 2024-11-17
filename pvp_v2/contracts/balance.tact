@@ -37,16 +37,26 @@ contract Balance with Deployable, Ownable {
         require(myBalance() >= MIN_BALANCE + msg.amount, "Not sufficient balance");
         require((self.owner == msg.player1 || self.owner == msg.player2) && self.owner != msg.winner, "Not correct balance");
 
-        let game: Address = contractAddress(initOf Game(msg.game_owner, msg.player1, msg.player2, msg.balance1, msg.balance2, msg.amount, msg.id));
+        let game: Address = contractAddress(initOf Game(msg.game_owner, msg.player1, msg.player2, msg.balance1, msg.balance2, msg.amount, msg.id, msg.royalty_percent, msg.royalty_destination));
+
         require(sender() == game, "Invalid sender");
+
+        let royaltyAmount: Int = min(msg.amount, (msg.amount * msg.royalty_percent) / 100);
+        let winnerAmount: Int = msg.amount - royaltyAmount;
 
         send(SendParameters{
             to: msg.winner,
-            value: msg.amount,
+            value: winnerAmount,
             mode: SendIgnoreErrors,
             body: TopUp{
                 query_id: 0
             }.toCell()
+        });
+
+        send(SendParameters{
+            to: msg.royalty_destination,
+            value: royaltyAmount,
+            mode: SendIgnoreErrors
         });
     }
 

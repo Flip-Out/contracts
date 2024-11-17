@@ -32,6 +32,8 @@ message PayDefeat {
   balance2: Address;
   amount: Int as coins;
   id: String;
+  royalty_percent: Int;
+  royalty_destination: Address;
 }
 
 message Withdraw {
