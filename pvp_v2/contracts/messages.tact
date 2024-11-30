@@ -20,7 +20,16 @@ message TopUp {
 }
 
 message CheckBalance {
+  available_amount: Int as coins;
+  game_owner: Address;
+  player1: Address;
+  balance1: Address;
+  player2: Address;
+  balance2: Address;
   amount: Int as coins;
+  id: String;
+  royalty_percent: Int;
+  royalty_destination: Address;
 }
 
 message PayDefeat {
