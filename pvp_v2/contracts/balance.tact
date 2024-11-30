@@ -21,7 +21,6 @@ contract Balance with Deployable, Ownable {
 
     receive(msg: CheckBalance) {
         self.unlockBalance();
-
         let ctx: Context = context();
         require(ctx.value >= GAS_CONSUMPTION + ctx.readForwardFee(), "Invalid TON amount");
 

@@ -105,7 +105,7 @@ contract Game with Deployable, Ownable {
 
         send(SendParameters{
             to: self.player1.balance,
-            value: ton("0.012"),
+            value: ton("0.018"),
             body: CheckBalance{
                 available_amount: self.game_bet,
                 game_owner: self.owner,
@@ -122,7 +122,7 @@ contract Game with Deployable, Ownable {
 
         send(SendParameters{
             to: self.player2.balance,
-            value: ton("0.012"),
+            value: ton("0.018"),
             body: CheckBalance{
                 available_amount: self.game_bet,
                 game_owner: self.owner,
