@@ -105,17 +105,35 @@ contract Game with Deployable, Ownable {
 
         send(SendParameters{
             to: self.player1.balance,
-            value: ton("0.012"),
+            value: ton("0.018"),
             body: CheckBalance{
-                amount: self.game_bet
+                available_amount: self.game_bet,
+                game_owner: self.owner,
+                player1: self.player1.address,
+                balance1: self.player1.balance,
+                player2: self.player2.address,
+                balance2: self.player2.balance,
+                amount: self.game_bet,
+                id: self.id,
+                royalty_percent: self.royalty_percent,
+                royalty_destination: self.royalty_destination
             }.toCell()
         });
-    
+
         send(SendParameters{
             to: self.player2.balance,
-            value: ton("0.012"),
+            value: ton("0.018"),
             body: CheckBalance{
-                amount: self.game_bet
+                available_amount: self.game_bet,
+                game_owner: self.owner,
+                player1: self.player1.address,
+                balance1: self.player1.balance,
+                player2: self.player2.address,
+                balance2: self.player2.balance,
+                amount: self.game_bet,
+                id: self.id,
+                royalty_percent: self.royalty_percent,
+                royalty_destination: self.royalty_destination
             }.toCell()
         });
 
@@ -133,6 +151,8 @@ contract Game with Deployable, Ownable {
     }
 
     receive(msg: BalanceVerification) {
+        require(self.player1.balance == sender() || self.player2.balance == sender(), "Not valid sender");
+
         let status = msg.is_sufficient_balance ? "SUCCESS" : "FAILED";
         if (self.player1.address == msg.balance_owner) {
             self.player1 = Player{
@@ -151,13 +171,13 @@ contract Game with Deployable, Ownable {
 
     get fun verified_players(): Int {
         let verified_players_count: Int = 0;
-        
+
         if (self.player1.balance_check_status == "SUCCESS") {
             verified_players_count += 1;
-        } 
+        }
         if (self.player2.balance_check_status == "SUCCESS") {
             verified_players_count += 1;
-        } 
+        }
 
         return verified_players_count;
     }
