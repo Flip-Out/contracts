@@ -15,6 +15,8 @@ struct Players {
 
 const MIN_BALANCE: Int = ton("0.01");
 const GAS_CONSUMPTION: Int = ton("0.01");
+const ONE_DAY: Int = 86400;
+const HALF_HOUR: Int = 1800;
 
 contract Game with Deployable, Ownable {
     
@@ -25,6 +27,7 @@ contract Game with Deployable, Ownable {
     game_bet: Int as coins;
     royalty_percent: Int;
     royalty_destination: Address;
+    createdAt: Int as uint64;
 
     init(owner: Address, player1: Address, player2: Address, balance1: Address, balance2: Address, game_bet: Int, id: String, royalty_percent: Int, royalty_destination: Address) {
         self.id = id;
@@ -42,6 +45,7 @@ contract Game with Deployable, Ownable {
             balance: balance2,
             balance_check_status: "NOT_STARTED"
         };
+        self.createdAt = now();
     }
 
     receive(msg: EndGame) {
@@ -166,6 +170,18 @@ contract Game with Deployable, Ownable {
                 balance: self.player2.balance,
                 balance_check_status: status
             };
+        }
+    }
+
+    receive(msg: DestroyBrokenGame) {
+        self.requireOwner();
+
+        if (now() - self.createdAt >= ONE_DAY) {
+            send(SendParameters{
+                to: sender(),
+                value: 0,
+                mode: SendRemainingBalance + SendDestroyIfZero
+            });
         }
     }
 

@@ -97,7 +97,7 @@ contract Balance with Deployable, Ownable {
     }
 
     fun unlockBalance() {
-        if (self.isLocked && self.lockTime != null && now() - self.lockTime!! >= 30 * 60) {
+        if (self.isLocked && self.lockTime != null && now() - self.lockTime!! >= HALF_HOUR) {
             self.isLocked = false;
             self.lockerAddress = null;
             self.lockTime = null;
