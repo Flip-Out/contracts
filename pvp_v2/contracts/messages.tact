@@ -48,3 +48,7 @@ message PayDefeat {
 message Withdraw {
   amount: Int as coins;
 }
+
+message DestroyBrokenGame {
+  query_id: Int as uint64;
+}
