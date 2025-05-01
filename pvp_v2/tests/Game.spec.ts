@@ -26,6 +26,106 @@ describe('Game', () => {
         // blockchain and game are ready to use
     });
 
+    it('should receive JettonNotify and update balance', async () => {
+        const balance: SandboxContract<Balance> = blockchain.openContract(await Balance.fromInit(player1.address));
+
+        await balance.send(
+            player1.getSender(),
+            { value: toNano('0.01') },
+            {
+                $$type: 'JettonNotify',
+                queryId: 0n,
+                amount: toNano('10'),
+                sender: player1.address,
+                forwardPayload: beginCell().endCell().beginParse(),
+            },
+        );
+
+        const jettonBalance = await balance.getJettonBalance(player1.address);
+
+        expect(jettonBalance).toBe(toNano('10'));
+    });
+
+    it('should process MakeBet and decrease jetton balance', async () => {
+        const balance: SandboxContract<Balance> = blockchain.openContract(await Balance.fromInit(player1.address));
+
+        const jettonWallet = await blockchain.treasury('jettonWallet');
+        const gameWallet = player2.address;
+
+        await balance.send(
+            jettonWallet.getSender(),
+            {
+                value: toNano('0.01'),
+            },
+            {
+                $$type: 'JettonNotify',
+                queryId: 0n,
+                amount: toNano('20'),
+                sender: jettonWallet.address,
+                forwardPayload: beginCell().endCell().beginParse(),
+            },
+        );
+
+        const before = await balance.getJettonBalance(jettonWallet.address);
+        expect(before).toBe(toNano('20'));
+
+        const betTx = await balance.send(
+            player1.getSender(),
+            {
+                value: toNano('0.045'),
+            },
+            {
+                $$type: 'MakeBet',
+                query_id: 1n,
+                jetton_address: jettonWallet.address,
+                amount: toNano('5'),
+                game_wallet_address: gameWallet,
+            },
+        );
+
+        const after = await balance.getJettonBalance(jettonWallet.address);
+        expect(after).toBe(toNano('15'));
+    });
+
+    it('should withdraw Jetton from contract and decrease balance', async () => {
+        const balance: SandboxContract<Balance> = blockchain.openContract(await Balance.fromInit(player1.address));
+
+        const jettonWallet = await blockchain.treasury('jettonWallet');
+
+        await balance.send(
+            jettonWallet.getSender(),
+            {
+                value: toNano('0.01'),
+            },
+            {
+                $$type: 'JettonNotify',
+                queryId: 0n,
+                amount: toNano('30'),
+                sender: jettonWallet.address,
+                forwardPayload: beginCell().endCell().beginParse(),
+            },
+        );
+
+        const before = await balance.getJettonBalance(jettonWallet.address);
+        expect(before).toBe(toNano('30'));
+
+        await balance.send(
+            player1.getSender(),
+            {
+                value: toNano('0.055'),
+            },
+            {
+                $$type: 'WithdrawJetton',
+                query_id: 1n,
+                jetton_address: jettonWallet.address,
+                amount: toNano('10'),
+            },
+        );
+
+        const after = await balance.getJettonBalance(jettonWallet.address);
+        expect(after).toBe(toNano('20'));
+    });
+
     it('game', async () => {
         const deployerBalanceBefore = await deployer.getBalance();
 

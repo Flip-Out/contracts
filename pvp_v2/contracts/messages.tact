@@ -52,3 +52,23 @@ message Withdraw {
 message DestroyBrokenGame {
   query_id: Int as uint64;
 }
+
+message(0x7362d09c) JettonNotify {
+  queryId: Int as uint64;
+  amount: Int as coins;
+  sender: Address;
+  forwardPayload: Slice as remaining;
+}
+
+message MakeBet {
+  query_id: Int as uint64;
+  game_wallet_address: Address;
+  jetton_address: Address;
+  amount: Int as uint256;
+}
+
+message WithdrawJetton {
+  query_id: Int as uint64;
+  jetton_address: Address;
+  amount: Int as uint256;
+}

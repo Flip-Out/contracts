@@ -3,12 +3,15 @@ import "@stdlib/ownable";
 import "./messages.tact";
 import "./game.tact";
 
+const JETTON_TRANSFER_GAS_CONSUMPTION: Int = ton("0.04");
+
 contract Balance with Deployable, Ownable {
     
     owner: Address;
     isLocked: Bool;
     lockerAddress: Address?;
     lockTime: Int?;
+    jetton_balances: map<Address, Int>;
 
     init(owner: Address) {
         self.owner = owner;
@@ -17,6 +20,40 @@ contract Balance with Deployable, Ownable {
 
     receive(msg: TopUp) {
         self.unlockBalance();
+    }
+
+    receive(msg: MakeBet) {
+        self.requireOwner();
+        let ctx: Context = context();
+        require(ctx.value >= JETTON_TRANSFER_GAS_CONSUMPTION + ctx.readForwardFee(), "Invalid TON amount");
+
+        let available_balance = self.available_jetton_balance(msg.jetton_address);
+        require(available_balance >= msg.amount, "Not enough available jetton balance");
+
+        send(SendParameters{
+        to: msg.jetton_address,
+        value: JETTON_TRANSFER_GAS_CONSUMPTION,
+        mode: 0,
+        body: beginCell()
+            .storeUint(0xf8a7ea5, 32)
+            .storeUint(msg.query_id, 64)
+            .storeCoins(msg.amount)
+            .storeAddress(msg.game_wallet_address)
+            .storeAddress(myAddress())
+            .storeCoins(1)
+            .storeUint(0, 1)
+            .endCell()
+        });
+
+        self.jetton_balances.set(msg.jetton_address, available_balance - msg.amount);
+    }
+
+    receive(msg: JettonNotify) {
+        let current_balance: Int? = 0;
+        if (self.jetton_balances.exists(msg.sender)) {
+            current_balance = self.jetton_balances.get(msg.sender);
+        }
+        self.jetton_balances.set(msg.sender, current_balance!! + msg.amount);
     }
 
     receive(msg: CheckBalance) {
@@ -96,6 +133,32 @@ contract Balance with Deployable, Ownable {
         });
     }
 
+    receive(msg: WithdrawJetton) {
+        self.requireOwner();
+        let ctx: Context = context();
+        require(ctx.value >= JETTON_TRANSFER_GAS_CONSUMPTION + GAS_CONSUMPTION + ctx.readForwardFee(), "Invalid TON amount");
+
+        let available_balance = self.available_jetton_balance(msg.jetton_address);
+        require(available_balance >= msg.amount, "Not enough available jetton balance");
+
+        send(SendParameters{
+        to: msg.jetton_address,
+        value: JETTON_TRANSFER_GAS_CONSUMPTION,
+        mode: 0,
+        body: beginCell()
+            .storeUint(0xf8a7ea5, 32)
+            .storeUint(msg.query_id, 64)
+            .storeCoins(msg.amount)
+            .storeAddress(self.owner)
+            .storeAddress(myAddress())
+            .storeCoins(1)
+            .storeUint(0, 1)
+            .endCell()
+        });
+
+        self.jetton_balances.set(msg.jetton_address, available_balance - msg.amount);
+    }
+
     fun unlockBalance() {
         if (self.isLocked && self.lockTime != null && now() - self.lockTime!! >= HALF_HOUR) {
             self.isLocked = false;
@@ -104,7 +167,23 @@ contract Balance with Deployable, Ownable {
         }
     }
 
+    fun available_jetton_balance(jetton_wallet: Address): Int {
+        let current_balance: Int? = 0;
+        if (self.jetton_balances.exists(jetton_wallet)) {
+            current_balance = self.jetton_balances.get(jetton_wallet);
+        }
+        return current_balance!!;
+    }
+
     get fun balance(): Int {
         return myBalance();
+    }
+
+    get fun jetton_balance(jetton_wallet: Address): Int {
+        let current_balance: Int? = 0;
+        if (self.jetton_balances.exists(jetton_wallet)) {
+            current_balance = self.jetton_balances.get(jetton_wallet);
+        }
+        return current_balance!!;
     }
 }
