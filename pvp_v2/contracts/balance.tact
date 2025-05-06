@@ -48,12 +48,27 @@ contract Balance with Deployable, Ownable {
         self.jetton_balances.set(msg.jetton_address, available_balance - msg.amount);
     }
 
+    receive(msg: MakeBetTon) {
+        self.requireOwner();
+        let ctx: Context = context();
+        require(ctx.value >= GAS_CONSUMPTION + ctx.readForwardFee(), "Invalid TON amount");
+
+        let available_balance = myBalance() - MIN_BALANCE;
+        require(available_balance >= msg.amount, "Not enough available TON balance");
+
+        send(SendParameters{
+            to: msg.game_wallet_address,
+            value: msg.amount,
+            mode: 0
+        });
+    }
+
     receive(msg: JettonNotify) {
         let current_balance: Int? = 0;
-        if (self.jetton_balances.exists(msg.sender)) {
-            current_balance = self.jetton_balances.get(msg.sender);
+        if (self.jetton_balances.exists(sender())) {
+            current_balance = self.jetton_balances.get(sender());
         }
-        self.jetton_balances.set(msg.sender, current_balance!! + msg.amount);
+        self.jetton_balances.set(sender(), current_balance!! + msg.amount);
     }
 
     receive(msg: CheckBalance) {
@@ -152,7 +167,7 @@ contract Balance with Deployable, Ownable {
             .storeAddress(self.owner)
             .storeAddress(myAddress())
             .storeCoins(1)
-            .storeUint(0, 1)
+            .storeRefEmpty()
             .endCell()
         });
 

@@ -67,6 +67,12 @@ message MakeBet {
   amount: Int as uint256;
 }
 
+message MakeBetTon {
+  query_id: Int as uint64;
+  game_wallet_address: Address;
+  amount: Int as uint256;
+}
+
 message WithdrawJetton {
   query_id: Int as uint64;
   jetton_address: Address;
