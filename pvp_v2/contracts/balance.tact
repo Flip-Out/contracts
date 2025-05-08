@@ -65,10 +65,10 @@ contract Balance with Deployable, Ownable {
 
     receive(msg: JettonNotify) {
         let current_balance: Int? = 0;
-        if (self.jetton_balances.exists(sender())) {
-            current_balance = self.jetton_balances.get(sender());
+        if (self.jetton_balances.exists(msg.sender)) {
+            current_balance = self.jetton_balances.get(msg.sender);
         }
-        self.jetton_balances.set(sender(), current_balance!! + msg.amount);
+        self.jetton_balances.set(msg.sender, current_balance!! + msg.amount);
     }
 
     receive(msg: CheckBalance) {
@@ -166,8 +166,11 @@ contract Balance with Deployable, Ownable {
             .storeCoins(msg.amount)
             .storeAddress(self.owner)
             .storeAddress(myAddress())
+            .storeMaybeRef(null)
             .storeCoins(1)
-            .storeRefEmpty()
+            .storeMaybeRef(beginCell()
+                .storeUint(0xF, 4)
+                .endCell())
             .endCell()
         });
 
